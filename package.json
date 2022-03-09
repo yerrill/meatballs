@@ -4,6 +4,9 @@
   "description": "meatballs bot",
   "main": "index.js",
   "scripts": {
+    "clean-linux": "rm -rf ./dist",
+    "clean-win": "rm ./dist",
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
