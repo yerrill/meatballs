@@ -1,13 +1,15 @@
-import { Client, Intents, MessageEmbed } from "discord.js";
+import { Client, Intents, Message, MessageEmbed, TextChannel } from "discord.js";
 import * as config from './config.json';
 import TwitterEmbed from "./Structures/Twitter";
-import './Structures/Twitter.ts'
+import './Structures/Twitter';
+import { TwitterApi } from 'twitter-api-v2';
 
 const client: Client = new Client({intents: [Intents.FLAGS.GUILDS]});
+const twitterClient = new TwitterApi(config.twitterBearer);
 
-async function sendEmbed(channelID: string, embed: MessageEmbed) {
-    const channel = client.channels.cache.get(channelID);
-    channel.send({ embeds: embed });
+async function sendEmbed(channelID: string, embed: MessageEmbed): Promise<Message<boolean>> {
+    const channel = client.channels.cache.get(channelID) as TextChannel;
+    return channel.send({ embeds: [embed] });
 }
 
 client.once('ready', () => {
@@ -26,8 +28,11 @@ client.on('interactionCreate', async interaction => {
 	} else if (commandName === 'user') {
 		await interaction.reply('User info.');
 	} else if (commandName === 'embedtest') {
-        sendEmbed(config.twitterChannel, new TwitterEmbed("abc"));
-        await interaction.reply("Sending...");
+        sendEmbed(config.twitterChannel, new TwitterEmbed("abc")).then(async (m) => {
+			await interaction.reply("Sending...");
+		}).catch(async (e) => {
+			await interaction.reply(`Error ${e}`);
+		});
     }
 });
 

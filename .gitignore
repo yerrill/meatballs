@@ -105,3 +105,6 @@ dist
 
 # Secrets file
 config.json
+
+# Testing file
+src/TestBench.ts
