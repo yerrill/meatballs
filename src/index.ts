@@ -1,11 +1,10 @@
 import { Client, Intents, Message, MessageEmbed, TextChannel } from "discord.js";
 import * as config from './config.json';
-import TwitterEmbed from "./Structures/Twitter";
-import './Structures/Twitter';
+import { TwitterEmbed } from "./Structures/Twitter";
 import { TwitterApi } from 'twitter-api-v2';
 
 const client: Client = new Client({intents: [Intents.FLAGS.GUILDS]});
-const twitterClient = new TwitterApi(config.twitterBearer);
+
 
 async function sendEmbed(channelID: string, embed: MessageEmbed): Promise<Message<boolean>> {
     const channel = client.channels.cache.get(channelID) as TextChannel;
