@@ -1,15 +1,41 @@
 import { Client, Intents, Message, MessageEmbed, TextChannel } from "discord.js";
 import * as config from './config.json';
-import { TwitterEmbed } from "./Structures/Twitter";
+import { Profile, Tweet, Twitter, TwitterEmbed } from "./Structures/Twitter";
 import { TwitterApi } from 'twitter-api-v2';
 
 const client: Client = new Client({intents: [Intents.FLAGS.GUILDS]});
-
+const t = new Twitter(config.twitterBearer);
 
 async function sendEmbed(channelID: string, embed: MessageEmbed): Promise<Message<boolean>> {
     const channel = client.channels.cache.get(channelID) as TextChannel;
     return channel.send({ embeds: [embed] });
 }
+
+async function getTweetsbyUser(user: string): Promise<Tweet[]> {
+	/*
+	const id: Promise<string> = await t.getIdByUsername(user);
+	id.catch((e) => {
+		console.log(e);
+	});
+
+	const prof: Promise<Profile> = id.then( (v) => {
+		return t.makeProfile(v);
+	});
+	prof.catch( (e) => {
+		console.log(e);
+	});
+
+	const tw: Promise<Tweet[]> = prof.then( (p) => {
+		return t.getTweetsByProfile(p);
+	});
+
+	return tw;*/
+
+	const id: string = await t.getIdByUsername(user);
+	const prof: Profile = await t.makeProfile(id);
+	return await t.getTweetsByProfile(prof);
+}
+
 
 client.once('ready', () => {
     console.log('Ready.');
@@ -27,12 +53,14 @@ client.on('interactionCreate', async interaction => {
 	} else if (commandName === 'user') {
 		await interaction.reply('User info.');
 	} else if (commandName === 'embedtest') {
-        sendEmbed(config.twitterChannel, new TwitterEmbed("abc")).then(async (m) => {
-			await interaction.reply("Sending...");
-		}).catch(async (e) => {
-			await interaction.reply(`Error ${e}`);
-		});
-    }
+
+		const userTweets: Tweet[] = await getTweetsbyUser("DattosDestiny");
+		await interaction.reply("Sending...");
+
+		for(var n in userTweets) {
+			await sendEmbed(config.twitterChannel, new TwitterEmbed(userTweets[n]));
+		}
+	}
 });
 
 client.login(config.token);

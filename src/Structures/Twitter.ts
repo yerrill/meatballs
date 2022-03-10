@@ -37,7 +37,7 @@ export class Twitter {
     }
 
     async getTweetsByProfile(profile: Profile): Promise<Tweet[]> {
-        const info: Promise<TweetUserTimelineV2Paginator> = this.twitterClient.v2.userTimeline(profile.id); //, {exclude: ['replies', 'retweets'], since_id: '1500706183379705858'}
+        const info: Promise<TweetUserTimelineV2Paginator> = this.twitterClient.v2.userTimeline(profile.id, {exclude: ['replies', 'retweets']}); //, {exclude: ['replies', 'retweets'], since_id: '1500706183379705858'}
 
         return new Promise((resolve, reject) => {
             var arr: Tweet[] = [];
@@ -100,11 +100,13 @@ export class Tweet {
     tweetAuthor: Profile;
     tweetId: string;
     tweetText: string;
+    tweetURL: string;
 
     constructor(author: Profile, id: string, text: string) {
         this.tweetAuthor = author;
         this.tweetId = id;
         this.tweetText = text;
+        this.tweetURL = `https://twitter.com/${this.tweetAuthor.username}/status/${this.tweetId}`;
     }
 
     get author(): Profile {
@@ -118,14 +120,23 @@ export class Tweet {
     get text(): string {
         return this.tweetText;
     }
+
+    get url(): string {
+        return this.tweetURL;
+    }
 }
 
 export class TwitterEmbed extends MessageEmbed {
-    public constructor(content: string){
+    public constructor(tweet: Tweet){
         super();
         this.setColor("#1DA1F2");
-        this.setTitle(content);
-        this.setURL("https://twitter.com");
-        this.setDescription(content);
+
+        this.setTitle(`${tweet.author.name}:`);
+        this.setURL(tweet.url);
+        this.setDescription(tweet.text);
+
+        this.setAuthor({ name: tweet.author.username, iconURL: tweet.author.profileImage, url: tweet.author.url });
+
+        this.setThumbnail("https://about.twitter.com/content/dam/about-twitter/en/brand-toolkit/brand-download-img-1.jpg.twimg.1920.jpg");
     }
 }
