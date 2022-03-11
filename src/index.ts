@@ -12,25 +12,6 @@ async function sendEmbed(channelID: string, embed: MessageEmbed): Promise<Messag
 }
 
 async function getTweetsbyUser(user: string): Promise<Tweet[]> {
-	/*
-	const id: Promise<string> = await t.getIdByUsername(user);
-	id.catch((e) => {
-		console.log(e);
-	});
-
-	const prof: Promise<Profile> = id.then( (v) => {
-		return t.makeProfile(v);
-	});
-	prof.catch( (e) => {
-		console.log(e);
-	});
-
-	const tw: Promise<Tweet[]> = prof.then( (p) => {
-		return t.getTweetsByProfile(p);
-	});
-
-	return tw;*/
-
 	const id: string = await t.getIdByUsername(user);
 	const prof: Profile = await t.makeProfile(id);
 	return await t.getTweetsByProfile(prof);

@@ -3,8 +3,32 @@ import {readFileSync, writeFileSync} from 'fs';
 const stateSave = './src/Core/state.json';
 
 
-interface StateObj {
-    twitterUsers: TwitterPair[];
+interface StateObj_ {
+    twitterUsers: Pair[];
+}
+
+export class StateObj implements StateObj_ {
+    twitterUsers: Pair[];
+
+    constructor() {
+        this.twitterUsers = [];
+    }
+}
+
+interface Pair_ {
+    id: string;
+    value: string;
+}
+
+export class Pair implements Pair_ {
+    id: string;
+    value: string;
+
+    constructor(in_id: string, in_value: string) {
+        this.id = in_id;
+        this.value = in_value;
+    }
+
 }
 
 
@@ -13,24 +37,16 @@ export default class State{
     //twitterUsers: TwitterPair[];
 
     constructor() {
-        this.obj = JSON.parse(readFileSync(stateSave, 'utf8'));
-    }
-}
+        var json: any = JSON.parse(readFileSync(stateSave, 'utf8'));
 
-export class TwitterPair {
-    userId: string;
-    lastTweet: string;
+        this.obj = new StateObj();
 
-    constructor(id: string, tid: string) {
-        this.userId = id;
-        this.lastTweet = tid;
+        for (var n in json.twitterUsers) { // Parse twitter users and last tweet into pair
+            this.obj.twitterUsers.push(new Pair(json.twitterUsers[n].id, json.twitterUsers[n].value));
+        }
     }
 
-    get id(): string {
-        return this.userId;
-    }
-
-    get tweet(): string {
-        return this.lastTweet;
+    write() {
+        writeFileSync(stateSave, JSON.stringify(this.obj));
     }
 }
