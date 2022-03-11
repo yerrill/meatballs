@@ -1,13 +1,16 @@
 import { MessageEmbed } from "discord.js";
 import { TweetUserTimelineV2Paginator, TwitterApi, UserV2Result } from "twitter-api-v2";
+import State, {Pair} from "../Core/State";
 
 export class Twitter {
     twitterClient: TwitterApi;
     bearerToken!: string;
+    stateRep!: State;
 
-    constructor(bearer: string) {
+    constructor(bearer: string, state_ref: State) {
         this.twitterClient = new TwitterApi(bearer);
         this.bearerToken = bearer;
+        this.stateRep = state_ref;
     }
 
     async getIdByUsername(username: string): Promise<string> { // Change To accurate typing later
@@ -37,7 +40,22 @@ export class Twitter {
     }
 
     async getTweetsByProfile(profile: Profile): Promise<Tweet[]> {
-        const info: Promise<TweetUserTimelineV2Paginator> = this.twitterClient.v2.userTimeline(profile.id, {exclude: ['replies', 'retweets']}); //, {exclude: ['replies', 'retweets'], since_id: '1500706183379705858'}
+        var lastTweet = this.stateGetLastTweetById(profile.id);
+        var info: Promise<TweetUserTimelineV2Paginator>;
+
+        if (lastTweet === "") {
+            info = this.twitterClient.v2.userTimeline(profile.id, {exclude: ['replies', 'retweets']});
+        }
+        else {
+            info = this.twitterClient.v2.userTimeline(profile.id, {exclude: ['replies', 'retweets'], since_id: lastTweet});
+        }
+
+        info.then( (v) => {
+            if(v.meta.newest_id){
+                this.stateUpdateLastTweet(profile.id, v.meta.newest_id);
+            }
+            //console.log(`Updated Last Tweet: ${profile.id} - ${v.meta.newest_id}`);
+        });
 
         return new Promise((resolve, reject) => {
             var arr: Tweet[] = [];
@@ -57,6 +75,25 @@ export class Twitter {
         });
     }
 
+    stateGetLastTweetById(id: string): string { // State - Get last tweet id from state
+        var tweetId: string;
+
+        for (var n in this.stateRep.obj.twitterUsers){
+            if (this.stateRep.obj.twitterUsers[n].id == id) {
+                return this.stateRep.obj.twitterUsers[n].value;
+            }
+        }
+
+        return "";
+    }
+
+    stateUpdateLastTweet(id: string, tweetId: string): void { //State - Update the last tweet from user
+        for (var n in this.stateRep.obj.twitterUsers) {
+            if (this.stateRep.obj.twitterUsers[n].id == id) {
+                this.stateRep.obj.twitterUsers[n].value = tweetId;
+            }
+        }
+    }
 
 }
 
@@ -136,7 +173,6 @@ export class TwitterEmbed extends MessageEmbed {
         this.setDescription(tweet.text);
 
         this.setAuthor({ name: tweet.author.username, iconURL: tweet.author.profileImage, url: tweet.author.url });
-
-        this.setThumbnail("https://about.twitter.com/content/dam/about-twitter/en/brand-toolkit/brand-download-img-1.jpg.twimg.1920.jpg");
+        //this.setThumbnail("https://about.twitter.com/content/dam/about-twitter/en/brand-toolkit/brand-download-img-1.jpg.twimg.1920.jpg");
     }
 }

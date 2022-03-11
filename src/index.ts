@@ -2,17 +2,18 @@ import { Client, Intents, Message, MessageEmbed, TextChannel } from "discord.js"
 import * as config from './config.json';
 import { Profile, Tweet, Twitter, TwitterEmbed } from "./Structures/Twitter";
 import { TwitterApi } from 'twitter-api-v2';
+import State, {Pair} from './Core/State';
 
 const client: Client = new Client({intents: [Intents.FLAGS.GUILDS]});
-const t = new Twitter(config.twitterBearer);
+const stateInfo = new State();
+const t = new Twitter(config.twitterBearer, stateInfo);
 
 async function sendEmbed(channelID: string, embed: MessageEmbed): Promise<Message<boolean>> {
     const channel = client.channels.cache.get(channelID) as TextChannel;
     return channel.send({ embeds: [embed] });
 }
 
-async function getTweetsbyUser(user: string): Promise<Tweet[]> {
-	const id: string = await t.getIdByUsername(user);
+async function getTweetsbyId(id: string): Promise<Tweet[]> {
 	const prof: Profile = await t.makeProfile(id);
 	return await t.getTweetsByProfile(prof);
 }
@@ -35,13 +36,23 @@ client.on('interactionCreate', async interaction => {
 		await interaction.reply('User info.');
 	} else if (commandName === 'embedtest') {
 
-		const userTweets: Tweet[] = await getTweetsbyUser("DattosDestiny");
+		var userTweets: Tweet[];
 		await interaction.reply("Sending...");
+		
+		for (var i in stateInfo.obj.twitterUsers) {
 
-		for(var n in userTweets) {
-			await sendEmbed(config.twitterChannel, new TwitterEmbed(userTweets[n]));
+			userTweets = await getTweetsbyId(stateInfo.obj.twitterUsers[i].id);
+
+			for(var n in userTweets) {
+				await sendEmbed(config.twitterChannel, new TwitterEmbed(userTweets[n]));
+			}
 		}
 	}
 });
 
 client.login(config.token);
+process.on("SIGINT", () =>  {
+	client.destroy();
+	stateInfo.write();
+	console.log("Wrote State File")
+});

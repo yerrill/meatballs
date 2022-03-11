@@ -46,7 +46,7 @@ export default class State{
         }
     }
 
-    write() {
+    write(): void {
         writeFileSync(stateSave, JSON.stringify(this.obj));
     }
 }
